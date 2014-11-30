@@ -69,7 +69,7 @@
 			<td><?php echo $amigo['email'];?></td>
 			<td class="actions">
 			<?php if ($sorteo['Sorteo']['Estat'] == 'sortejat') {
-					 echo $html->link(__('Send Key', true), array('action'=>'sendKey', $amigo['amigo_id'])); 
+					 echo $html->link(__('Send Key', true), array('controller'=>'sorteos', 'action'=>'sendKey', $amigo['amigo_id'])); 
 					}
 				  if ($sorteo['Sorteo']['Estat'] == 'no sortejat') {
 					 echo $html->link(__('Edit', true), array('action'=>'edit', $amigo['amigo_id'])); 

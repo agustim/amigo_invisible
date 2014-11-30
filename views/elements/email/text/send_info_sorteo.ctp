@@ -10,6 +10,7 @@ en está página http://<?php echo $_SERVER['SERVER_NAME'].$this->base?>/paginas
 Por favor, recureda que para que tu amigo insivible pueda saber cuales son tus preferencias y tenga tiempo 
 de conseguirlas es necesario que las escribas cuanto antes. 
 
+Si tienes curiosidad, tambien puedes ver en http://<?php echo $_SERVER['SERVER_NAME'].$this->base?>/amigos/pages/<?php echo $sorteo_id?>/<?php echo $sorteo_friendly_name?> los deseos de todos los amigos.
 
 Un cordial saludo.
 Staff biruji.dev

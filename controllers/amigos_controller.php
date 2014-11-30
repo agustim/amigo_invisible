@@ -4,18 +4,29 @@ class AmigosController extends AppController {
 	var $name = 'Amigos';
 	var $helpers = array('Html', 'Form');
 	var $components = array('Auth','Email','SwiftMailer'); 
+	var $wordSeparator = "-";
 
 	function beforeFilter(){
 		parent::beforeFilter();		
+		$this->Auth->allow(array('pages'));
 		$this->Auth->deny('*');
 	}
-	
 	function isAuthorized(){
 		return ( ($this->Auth->user('group_id') == 'admin') ||
 				 (($this->Auth->user('group_id') == 'user') && ( in_array($this->action,array('view','index','add','edit','sendKey','delete')) ))
 				);
 	}
 
+	function pages($id = null, $fn = null) {
+ 		if (!$id || !$fn) {
+                        $this->redirect(array('controller'=>'sorteos','action'=>'index'));
+                }
+		$amics = $this->paginate(array('Amigo.sorteo_id'=>$id,'Sorteo.friendly_name'=>$fn));
+		if (count($amics) <= 0 ) {
+			$this->redirect(array('controller'=>'sorteos','action'=>'index'));
+                }
+                $this->set('amigos', $amics);
+	}
 	function index($id = null) {
 		if (!$this->_checkSorteo($id)){
 			$this->redirect(array('controller'=>'sorteos','action'=>'index'));
@@ -95,7 +106,8 @@ class AmigosController extends AppController {
 	function sendKey($id = null){
 		if($this->_checkSorteo()){
 			$user_actual = $this->Amigo->read(null,$id);
-			$this->_sendEmailInformation($user_actual['Amigo']['email'],$user_actual['Sorteo']['nom'],
+			$this->_sendEmailInformation($user_actual['Amigo']['email'],$user_actual['Sorteo']['sorteo_id'],
+				$user_actual['Sorteo']['nom'],
 				$user_actual['TuAmigo']['nom'],$user_actual['TuAmigo']['amigo_id'],
 				$user_actual['TuAmigo']['public_key'],$user_actual['Amigo']['amigo_id'],
 				$user_actual['Amigo']['private_key'],$user_actual['Amigo']['nom']);
@@ -120,20 +132,22 @@ class AmigosController extends AppController {
 		}
 		return($val);
 	}
-	function _sendEmailInformation($send_to,$sorteo_name,$ai_name,$ai_id,$ai_pagina,$your_id,$your_private_page,$your_name)
+	function _sendEmailInformation($send_to,$sorteo_id, $sorteo_name,$ai_name,$ai_id,$ai_pagina,$your_id,$your_private_page,$your_name)
 	{
 		$this->Email->smtpOptions = array(	'port' => Configure::read('Mail.port'),
 											'host' => Configure::read('Mail.host'),
 											'timeout' => Configure::read('Mail.timeout'),
 											'username'=> Configure::read('Mail.username'),
 											'password' => Configure::read('Mail.password'));
-		$this->Email->delivery = 'smtpAuthTLS';
+		//$this->Email->delivery = 'smtpAuthTLS';
 		$this->Email->to = $send_to;
         	$this->Email->subject = '[Amigo Invisible] Resultado del Sorteo';
         	$this->Email->from = Configure::read('Mail.from');
 		$this->Email->template = 'resend_info_sorteo';
 		$this->Email->sendAs = 'text';
+		$this->set('sorteo_id',$sorteo_id);
 		$this->set('sorteo_name',$sorteo_name);
+		$this->set('sorteo_friendly_name',$this->_getStringAsNiceName($sorteo_name));
 		$this->set('ai_name',$ai_name);
 		$this->set('ai_id',$ai_id);
 		$this->set('ai_pagina',$ai_pagina);
@@ -143,5 +157,26 @@ class AmigosController extends AppController {
         	$datos = $this->Email->send();
 		return true;	
 	}
+        function _getStringAsNiceName($string)
+        {
+                //strip tags, trim, and lowercase
+                $string = strtolower(trim(strip_tags($string)));
+                //replace single quotes and double quotes first
+                $string = preg_replace('/[\']/i', '', $string);
+                $string = preg_replace('/["]/i', '', $string);
+
+                $string = preg_replace('/&/', 'and', $string);
+
+                //remove non-valid characters
+                $string = preg_replace('/[^-a-z0-9]/i', $this->wordSeparator, $string);
+                $string = preg_replace('/-[-]*/i', $this->wordSeparator, $string);
+
+                //remove from beginning and end
+                $string = preg_replace('/' . $this->wordSeparator . '$/i', '', $string);
+                $string = preg_replace('/^' . $this->wordSeparator . '/i', '', $string);
+
+                return $string;
+        }
+
 }
 ?>
